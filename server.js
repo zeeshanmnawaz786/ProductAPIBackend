@@ -1,6 +1,8 @@
 const express = require("express");
 const cors = require("cors");
 const mongoose = require("mongoose");
+const dotenv = require('dotenv');
+dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -10,8 +12,7 @@ app.use(cors());
 app.use(express.json());
 
 // MongoDB Atlas URI
-const mongodbURI =
-  "mongodb+srv://SufyanAhmed:123454678@cluster0.zblpfcg.mongodb.net/?retryWrites=true&w=majority"; // Replace this with your MongoDB Atlas URI
+const mongodbURI =process.env.DB_URL; 
 
 
 async function run() {
@@ -21,7 +22,7 @@ async function run() {
   useNewUrlParser: true,
   useUnifiedTopology: true,
   serverSelectionTimeoutMS: 30000,
- // 30 seconds
+
 })
     console.log(
       "Pinged your deployment. You successfully connected to MongoDB!"
@@ -43,7 +44,6 @@ const productSchema = new mongoose.Schema({
 const Product = mongoose.model("Product", productSchema);
 
 // Rest of the CRUD routes and app.listen() can remain the same as before
-// Create a new product
 
 app.post("/", async (req, res) => {
   console.log("Product created function");
