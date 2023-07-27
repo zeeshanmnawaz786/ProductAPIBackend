@@ -78,7 +78,8 @@ app.post("/", async (req, res) => {
 });
 
 // Get all products
-app.get("/getall", async (req, res) => {
+
+app.get("/", async (req, res) => {
   console.log("Gett all products");
   try {
     const products = await Product.find();
