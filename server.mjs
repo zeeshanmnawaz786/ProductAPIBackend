@@ -66,7 +66,7 @@ app.post("/", async (req, res) => {
 });
 
 // Get all products
-app.get("/", async (req, res) => {
+app.get("/check", async (req, res) => {
   console.log("Get all products");
   try {
     const products = await db.collection(collectionName).find().toArray();
