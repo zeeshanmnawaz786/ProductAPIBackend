@@ -97,7 +97,7 @@ app.put("/api/products/:id", async (req, res) => {
 
     const updatedProduct = { name, description, price };
     const result = await db.collection(collectionName).updateOne(
-      { _id: ObjectId(productId) },
+      { _id: new ObjectId(productId) },
       { $set: updatedProduct }
     );
 
@@ -117,7 +117,7 @@ app.delete("/api/products/:id", async (req, res) => {
   console.log("Delete Product function called");
   try {
     const productId = req.params.id;
-    const result = await db.collection(collectionName).deleteOne({ _id: ObjectId(productId) });
+    const result = await db.collection(collectionName).deleteOne({ _id: new ObjectId(productId) });
 
     if (result.deletedCount === 0) {
       return handleError(res, 404, "Product not found");
