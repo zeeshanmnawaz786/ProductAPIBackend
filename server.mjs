@@ -1,15 +1,15 @@
-const express = require("express");
-const cors = require("cors");
-const mongoose = require("mongoose");
-const dotenv = require('dotenv');
-dotenv.config();
+import express, { json } from "express";
+import cors from "cors";
+import { connect, Schema, model } from "mongoose";
+import { config } from 'dotenv';
+config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(cors());
-app.use(express.json());
+app.use(json());
 
 // MongoDB Atlas URI
 const mongodbURI =process.env.DB_URL; 
@@ -18,7 +18,7 @@ const mongodbURI =process.env.DB_URL;
 async function run() {
   try {
   
- mongoose.connect(mongodbURI, {
+ connect(mongodbURI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
   serverSelectionTimeoutMS: 30000,
@@ -35,13 +35,13 @@ async function run() {
 run().catch(console.dir);
 
 // Define the Product schema
-const productSchema = new mongoose.Schema({
+const productSchema = new Schema({
   name: String,
   description: String,
   price: Number,
 });
 
-const Product = mongoose.model("Product", productSchema);
+const Product = model("Product", productSchema);
 
 // Rest of the CRUD routes and app.listen() can remain the same as before
 
