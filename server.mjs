@@ -1,6 +1,6 @@
-import express, { json } from "express";
+import express from "express";
 import cors from "cors";
-import { connect, Schema, model } from "mongoose";
+import { MongoClient, ObjectId } from "mongodb";
 import { config } from 'dotenv';
 config();
 
@@ -9,24 +9,21 @@ const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(cors());
-app.use(json());
+app.use(express.json());
 
 // MongoDB Atlas URI
-const mongodbURI =process.env.DB_URL; 
+const mongodbURI = process.env.DB_URL; 
 
+let db;
 
 async function run() {
   try {
-  
- connect(mongodbURI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-  serverSelectionTimeoutMS: 30000,
-
-})
-    console.log(
-      "Pinged your deployment. You successfully connected to MongoDB!"
-    );
+    const client = await MongoClient.connect(mongodbURI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    });
+    db = client.db(); // Get the database instance
+    console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } catch (error) {
     console.log("Failed to connect to MongoDB:", error);
   }
@@ -34,114 +31,115 @@ async function run() {
 
 run().catch(console.dir);
 
-// Define the Product schema
-const productSchema = new Schema({
-  name: String,
-  description: String,
-  price: Number,
-});
+// Define the collection name
+const collectionName = "products";
 
-const Product = model("Product", productSchema);
+// Create a function to handle errors
+function handleError(res, status, message) {
+  res.status(status).json({ error: message });
+}
 
-// Rest of the CRUD routes and app.listen() can remain the same as before
-
+// Create a product
 app.post("/", async (req, res) => {
   console.log("Product created function");
   try {
     const { name, description, price } = req.body;
-    console.log("DATA BODY ", req.body);
 
     // Validate the product data
     if (!name || name.trim() === "") {
-      return res.status(400).json({ error: "Product name is required" });
+      return handleError(res, 400, "Product name is required");
     }
 
     if (!price || price < 0) {
-      return res
-        .status(400)
-        .json({ error: "Product price must be a positive number" });
+      return handleError(res, 400, "Product price must be a positive number");
     }
 
-    const product = new Product({ name, description, price });
-    console.log("check1");
+    const product = { name, description, price };
+    const result = await db.collection(collectionName).insertOne(product);
+    const savedProduct = result.ops[0];
 
-    const savedProduct = await product.save({ wtimeout: 30000 });
-
-    console.log("check2");
     res.status(201).json(savedProduct);
   } catch (error) {
     console.error(error);
-    res
-      .status(500)
-      .json({ error: "Failed to create product", errorMessage: error.message });
+    handleError(res, 500, "Failed to create product");
   }
 });
 
 // Get all products
-
 app.get("/", async (req, res) => {
-  console.log("Gett all products");
+  console.log("Get all products");
   try {
-    const products = await Product.find();
+    const products = await db.collection(collectionName).find().toArray();
     res.json(products);
   } catch (error) {
     console.log(error);
-    res.status(500).json({ error: "Failed to get products" });
+    handleError(res, 500, "Failed to get products");
   }
 });
 
 // Get a single product by ID
 app.get("/api/products/:id", async (req, res) => {
-  console.log("get Single Product");
+  console.log("Get Single Product");
   try {
     const productId = req.params.id;
-    const product = await Product.findById(productId);
+    const product = await db.collection(collectionName).findOne({ _id: ObjectId(productId) });
     if (!product) {
-      return res.status(404).json({ error: "Product not found" });
+      return handleError(res, 404, "Product not found");
     }
     res.json(product);
   } catch (error) {
     console.log(error);
-    res.status(500).json({ error: "Failed to get product" });
+    handleError(res, 500, "Failed to get product");
   }
 });
 
 // Update a product by ID
 app.put("/api/products/:id", async (req, res) => {
-  // console.log("Get Product by ID", req.params);
   try {
-    const Updatedprduct= req.body;
+    const productId = req.params.id;
+    const { name, description, price } = req.body;
 
-    const id = req.params.id;
-    const product = await Product.findOneAndUpdate( { _id: id } ,Updatedprduct ,  { new: true },);
-
-
-
-    console.log(product)
-    if (!product) {
-      return res.status(404).json({ error: "Product not found" });
+    // Validate the product data
+    if (!name || name.trim() === "") {
+      return handleError(res, 400, "Product name is required");
     }
 
-    res.json(product);
+    if (!price || price < 0) {
+      return handleError(res, 400, "Product price must be a positive number");
+    }
+
+    const updatedProduct = { name, description, price };
+    const result = await db.collection(collectionName).updateOne(
+      { _id: ObjectId(productId) },
+      { $set: updatedProduct }
+    );
+
+    if (result.modifiedCount === 0) {
+      return handleError(res, 404, "Product not found");
+    }
+
+    res.json(updatedProduct);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: "Failed to update product" });
+    handleError(res, 500, "Failed to update product");
   }
-}); // Delete a product by ID
+});
+
+// Delete a product by ID
 app.delete("/api/products/:id", async (req, res) => {
   console.log("Delete Product function called");
   try {
     const productId = req.params.id;
-    const product = await Product.findByIdAndRemove(productId);
-    if (!product) {
-      return res.status(404).json({ error: "Product not found" });
+    const result = await db.collection(collectionName).deleteOne({ _id: ObjectId(productId) });
+
+    if (result.deletedCount === 0) {
+      return handleError(res, 404, "Product not found");
     }
+
     res.json({ message: "Product deleted successfully" });
   } catch (error) {
     console.error(error);
-    res
-      .status(500)
-      .json({ error: "Failed to delete product", errorMessage: error.message });
+    handleError(res, 500, "Failed to delete product");
   }
 });
 
