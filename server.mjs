@@ -7,11 +7,11 @@ config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware
+
 app.use(cors());
 app.use(express.json());
 
-// MongoDB Atlas URI
+// URI
 const mongodbURI = process.env.DB_URL; 
 
 let db;
@@ -22,7 +22,7 @@ async function run() {
       useNewUrlParser: true,
       useUnifiedTopology: true,
     });
-    db = client.db(); // Get the database instance
+    db = client.db();
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } catch (error) {
     console.log("Failed to connect to MongoDB:", error);
@@ -31,10 +31,10 @@ async function run() {
 
 run().catch(console.dir);
 
-// Define the collection name
-const collectionName = "products";
+// collection name
+const collectionName = "test";
 
-// Create a function to handle errors
+// handle errors
 function handleError(res, status, message) {
   res.status(status).json({ error: message });
 }
@@ -44,8 +44,8 @@ app.post("/", async (req, res) => {
   console.log("Product created function");
   try {
     const { name, description, price } = req.body;
-
-    // Validate the product data
+    // console.log(req.body)
+// if else 
     if (!name || name.trim() === "") {
       return handleError(res, 400, "Product name is required");
     }
@@ -55,8 +55,10 @@ app.post("/", async (req, res) => {
     }
 
     const product = { name, description, price };
+    console.log(product)
+    
     const result = await db.collection(collectionName).insertOne(product);
-    const savedProduct = result.ops[0];
+    const savedProduct = result.insertedId;
 
     res.status(201).json(savedProduct);
   } catch (error) {
@@ -70,6 +72,7 @@ app.get("/check", async (req, res) => {
   console.log("Get all products");
   try {
     const products = await db.collection(collectionName).find().toArray();
+    console.log(products)
     res.json(products);
   } catch (error) {
     console.log(error);
@@ -77,29 +80,13 @@ app.get("/check", async (req, res) => {
   }
 });
 
-// Get a single product by ID
-app.get("/api/products/:id", async (req, res) => {
-  console.log("Get Single Product");
-  try {
-    const productId = req.params.id;
-    const product = await db.collection(collectionName).findOne({ _id: ObjectId(productId) });
-    if (!product) {
-      return handleError(res, 404, "Product not found");
-    }
-    res.json(product);
-  } catch (error) {
-    console.log(error);
-    handleError(res, 500, "Failed to get product");
-  }
-});
-
-// Update a product by ID
+// Update product by ID
 app.put("/api/products/:id", async (req, res) => {
   try {
     const productId = req.params.id;
     const { name, description, price } = req.body;
 
-    // Validate the product data
+    // Validation
     if (!name || name.trim() === "") {
       return handleError(res, 400, "Product name is required");
     }
