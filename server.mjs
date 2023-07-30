@@ -54,6 +54,7 @@ app.post("/", async (req, res) => {
       return handleError(res, 400, "Product price must be a positive number");
     }
 
+    
     const product = { name, description, price };
     console.log(product)
     
