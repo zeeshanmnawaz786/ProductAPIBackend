@@ -2,32 +2,51 @@ import express from "express";
 import cors from "cors";
 import { MongoClient, ObjectId } from "mongodb";
 import { config } from 'dotenv';
+
 config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const corsOptions = {
+  origin: ['http://localhost:3000', 'https://smitproducts.netlify.app'],
+  credentials: true,
+  optionSuccessStatus: 200
+};
 
-const corsOptions ={
-    origin:'http://localhost:3000' || "https://smitproducts.netlify.app/", 
-    credentials:true,            //access-control-allow-credentials:true
-    optionSuccessStatus:200
-}
 app.use(cors(corsOptions));
+app.use(express.json());
 
-app.use(express.json())
-
-// URI
-const mongodbURI = process.env.DB_URL; 
-
+const mongodbURI = process.env.DB_URL;
 let db;
+
+async function connectToDatabase() {
+  const maxRetries = 5;
+  let retries = 0;
+  
+  while (retries < maxRetries) {
+    try {
+      const client = await MongoClient.connect(mongodbURI, {
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
+      });
+      db = client.db();
+      console.log("Connected to MongoDB!");
+      break;
+    } catch (error) {
+      console.log(`Failed to connect to MongoDB (Retry ${retries + 1}/${maxRetries}):`, error);
+      retries++;
+      await new Promise(resolve => setTimeout(resolve, 5000)); // Wait 5 seconds before retrying
+    }
+  }
+
+  if (retries === maxRetries) {
+    console.log("Failed to connect to MongoDB after multiple attempts.");
+  }
+}
 
 async function run() {
   try {
-    const client = await MongoClient.connect(mongodbURI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
-    db = client.db();
+    await connectToDatabase();
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } catch (error) {
     console.log("Failed to connect to MongoDB:", error);
@@ -36,21 +55,18 @@ async function run() {
 
 run().catch(console.dir);
 
-// collection name
 const collectionName = "test";
 
-// handle errors
 function handleError(res, status, message) {
   res.status(status).json({ error: message });
 }
 
 // Create a product
-app.post("/", async (req, res) => {
+app.post("/api/products", async (req, res) => {
   console.log("Product created function");
   try {
     const { name, description, price } = req.body;
-    // console.log(req.body)
-// if else 
+
     if (!name || name.trim() === "") {
       return handleError(res, 400, "Product name is required");
     }
@@ -59,14 +75,11 @@ app.post("/", async (req, res) => {
       return handleError(res, 400, "Product price must be a positive number");
     }
 
-    
     const product = { name, description, price };
-    console.log(product)
-    
     const result = await db.collection(collectionName).insertOne(product);
     const savedProduct = result.insertedId;
 
-    res.status(201).json(savedProduct);
+    res.status(201).json({ id: savedProduct });
   } catch (error) {
     console.error(error);
     handleError(res, 500, "Failed to create product");
@@ -74,14 +87,11 @@ app.post("/", async (req, res) => {
 });
 
 // Get all products
-app.get("/check", async (req, res) => {
+app.get("/api/products", async (req, res) => {
   console.log("Get all products");
   try {
     const products = await db.collection(collectionName).find().toArray();
-    console.log(products);
-    const check =  res.json(products);
-    console.log(check)
-    
+    res.json(products);
   } catch (error) {
     console.log("Error fetching products:", error);
     handleError(res, 500, "Failed to get products");
@@ -94,7 +104,6 @@ app.put("/api/products/:id", async (req, res) => {
     const productId = req.params.id;
     const { name, description, price } = req.body;
 
-    // Validation
     if (!name || name.trim() === "") {
       return handleError(res, 400, "Product name is required");
     }
