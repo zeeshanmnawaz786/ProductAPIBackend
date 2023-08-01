@@ -71,10 +71,12 @@ app.get("/check", async (req, res) => {
   console.log("Get all products");
   try {
     const products = await db.collection(collectionName).find().toArray();
-    console.log(products)
-    res.json(products);
+    console.log(products);
+    const check =  res.json(products);
+    console.log(check)
+    
   } catch (error) {
-    console.log(error);
+    console.log("Error fetching products:", error);
     handleError(res, 500, "Failed to get products");
   }
 });
