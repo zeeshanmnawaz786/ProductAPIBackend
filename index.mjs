@@ -15,7 +15,7 @@ const mongodbURI = process.env.DB_URL;
 
 let db;
 
-async function run() {
+async function connectToDatabase() {
   try {
     const client = await MongoClient.connect(mongodbURI, {
       useNewUrlParser: true,
@@ -27,18 +27,26 @@ async function run() {
     );
   } catch (error) {
     console.log("Failed to connect to MongoDB:", error);
+    process.exit(1); // Exit the application if the connection fails
   }
 }
 
-run().catch(console.dir);
-
-// collection name
-const collectionName = "test";
+// Call the connectToDatabase function to establish the MongoDB connection
+connectToDatabase();
 
 // handle errors
 function handleError(res, status, message) {
   res.status(status).json({ error: message });
 }
+
+// Middleware to check if the database connection is established
+app.use((req, res, next) => {
+  if (!db) {
+    // If the database connection is not established, return an error response
+    return handleError(res, 500, "Database connection is not ready");
+  }
+  next();
+});
 
 // Create a product
 app.post("/postProduct", async (req, res) => {
@@ -133,7 +141,7 @@ app.delete("/api/products/:id", async (req, res) => {
 });
 
 app.get("/", async (req, res) => {
-  res.send("Server is runnning");
+  res.send("Server is running");
 });
 
 // Start the server
