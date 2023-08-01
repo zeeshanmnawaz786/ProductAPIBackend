@@ -58,7 +58,7 @@ app.post("/postProduct", async (req, res) => {
     const product = { name, description, price };
     console.log(product);
 
-    const result = await db.collection(collectionName).insertOne(product);
+    const result = await db.collection("test").insertOne(product);
     const savedProduct = result.insertedId;
 
     res.status(201).json(savedProduct);
@@ -98,7 +98,7 @@ app.put("/api/products/:id", async (req, res) => {
 
     const updatedProduct = { name, description, price };
     const result = await db
-      .collection(collectionName)
+      .collection("test")
       .updateOne({ _id: new ObjectId(productId) }, { $set: updatedProduct });
 
     if (result.modifiedCount === 0) {
@@ -118,7 +118,7 @@ app.delete("/api/products/:id", async (req, res) => {
   try {
     const productId = req.params.id;
     const result = await db
-      .collection(collectionName)
+      .collection("test")
       .deleteOne({ _id: new ObjectId(productId) });
 
     if (result.deletedCount === 0) {
