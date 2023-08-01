@@ -30,7 +30,7 @@ async function run() {
 run().catch(console.dir);
 
 // collection name
-const collectionName = "products";
+const collectionName = "test";
 
 // handle errors
 function handleError(res, status, message) {
