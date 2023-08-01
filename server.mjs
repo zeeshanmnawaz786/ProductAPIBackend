@@ -1,5 +1,5 @@
 import express from "express";
-// import cors from "cors";
+import cors from "cors";
 import { MongoClient, ObjectId } from "mongodb";
 import { config } from 'dotenv';
 config();
@@ -7,7 +7,7 @@ config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(express.json());
+app.use(cors());
 
 // URI
 const mongodbURI = process.env.DB_URL; 
