@@ -33,7 +33,7 @@ async function run() {
 run().catch(console.dir);
 
 // collection name
-const collectionName = "sufyan";
+const collectionName = "test";
 
 // handle errors
 function handleError(res, status, message) {
@@ -72,7 +72,7 @@ app.post("/postProduct", async (req, res) => {
 app.get("/check", async (req, res) => {
   console.log("Get all products");
   try {
-    const products = await db.collection(collectionName).find().toArray();
+    const products = await db.collection("test").find().toArray();
     console.log(products);
     res.json(products);
   } catch (error) {
