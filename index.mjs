@@ -1,18 +1,17 @@
 import express from "express";
 import cors from "cors";
 import { MongoClient, ObjectId } from "mongodb";
-import { config } from 'dotenv';
+import { config } from "dotenv";
 config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-
 app.use(cors());
 app.use(express.json());
 
 // URI
-const mongodbURI = process.env.DB_URL; 
+const mongodbURI = process.env.DB_URL;
 
 let db;
 
@@ -23,7 +22,9 @@ async function run() {
       useUnifiedTopology: true,
     });
     db = client.db();
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
+    console.log(
+      "Pinged your deployment. You successfully connected to MongoDB!"
+    );
   } catch (error) {
     console.log("Failed to connect to MongoDB:", error);
   }
@@ -32,7 +33,7 @@ async function run() {
 run().catch(console.dir);
 
 // collection name
-const collectionName = "test";
+const collectionName = "sufyan";
 
 // handle errors
 function handleError(res, status, message) {
@@ -45,7 +46,7 @@ app.post("/", async (req, res) => {
   try {
     const { name, description, price } = req.body;
     // console.log(req.body)
-// if else 
+    // if else
     if (!name || name.trim() === "") {
       return handleError(res, 400, "Product name is required");
     }
@@ -54,10 +55,9 @@ app.post("/", async (req, res) => {
       return handleError(res, 400, "Product price must be a positive number");
     }
 
-    
     const product = { name, description, price };
-    console.log(product)
-    
+    console.log(product);
+
     const result = await db.collection(collectionName).insertOne(product);
     const savedProduct = result.insertedId;
 
@@ -73,10 +73,10 @@ app.get("/check", async (req, res) => {
   console.log("Get all products");
   try {
     const products = await db.collection(collectionName).find().toArray();
-    console.log(products)
+    console.log(products);
     res.json(products);
   } catch (error) {
-    console.log(error);
+    console.log(error.message);
     handleError(res, 500, "Failed to get products");
   }
 });
@@ -97,10 +97,9 @@ app.put("/api/products/:id", async (req, res) => {
     }
 
     const updatedProduct = { name, description, price };
-    const result = await db.collection(collectionName).updateOne(
-      { _id: new ObjectId(productId) },
-      { $set: updatedProduct }
-    );
+    const result = await db
+      .collection(collectionName)
+      .updateOne({ _id: new ObjectId(productId) }, { $set: updatedProduct });
 
     if (result.modifiedCount === 0) {
       return handleError(res, 404, "Product not found");
@@ -118,7 +117,9 @@ app.delete("/api/products/:id", async (req, res) => {
   console.log("Delete Product function called");
   try {
     const productId = req.params.id;
-    const result = await db.collection(collectionName).deleteOne({ _id: new ObjectId(productId) });
+    const result = await db
+      .collection(collectionName)
+      .deleteOne({ _id: new ObjectId(productId) });
 
     if (result.deletedCount === 0) {
       return handleError(res, 404, "Product not found");
