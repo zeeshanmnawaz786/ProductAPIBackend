@@ -7,7 +7,14 @@ config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(cors());
+const corsOptions ={
+    origin:'http://localhost:3000' || "https://smitproducts.netlify.app/", 
+    credentials:true,            //access-control-allow-credentials:true
+    optionSuccessStatus:200
+}
+app.use(cors(corsOptions));
+
+app.use(express.json())
 
 // URI
 const mongodbURI = process.env.DB_URL; 
