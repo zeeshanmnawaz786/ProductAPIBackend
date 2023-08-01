@@ -41,7 +41,7 @@ function handleError(res, status, message) {
 }
 
 // Create a product
-app.post("/", async (req, res) => {
+app.post("/postProduct", async (req, res) => {
   console.log("Product created function");
   try {
     const { name, description, price } = req.body;
@@ -130,6 +130,10 @@ app.delete("/api/products/:id", async (req, res) => {
     console.error(error);
     handleError(res, 500, "Failed to delete product");
   }
+});
+
+app.get("/", async (req, res) => {
+  res.send("Server is runnning");
 });
 
 // Start the server
