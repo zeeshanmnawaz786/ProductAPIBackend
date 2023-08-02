@@ -25,13 +25,15 @@ async function connectToDatabase() {
     console.log(
       "Pinged your deployment. You successfully connected to MongoDB!"
     );
+    app.listen(PORT, () => {
+      console.log(`Server is running on port http://localhost:${PORT}`);
+    });
   } catch (error) {
     console.log("Failed to connect to MongoDB:", error);
-    process.exit(1); // Exit the application if the connection fails
+    process.exit(1);
   }
 }
 
-// Call the connectToDatabase function to establish the MongoDB connection
 connectToDatabase();
 
 // handle errors
@@ -39,10 +41,8 @@ function handleError(res, status, message) {
   res.status(status).json({ error: message });
 }
 
-// Middleware to check if the database connection is established
 app.use((req, res, next) => {
   if (!db) {
-    // If the database connection is not established, return an error response
     return handleError(res, 500, "Database connection is not ready");
   }
   next();
@@ -53,8 +53,6 @@ app.post("/postProduct", async (req, res) => {
   console.log("Product created function");
   try {
     const { name, description, price } = req.body;
-    // console.log(req.body)
-    // if else
     if (!name || name.trim() === "") {
       return handleError(res, 400, "Product name is required");
     }
@@ -142,9 +140,4 @@ app.delete("/api/products/:id", async (req, res) => {
 
 app.get("/", async (req, res) => {
   res.send("Server is running");
-});
-
-// Start the server
-app.listen(PORT, () => {
-  console.log(`Server is running on port http://localhost:${PORT}`);
 });
